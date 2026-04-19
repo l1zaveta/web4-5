@@ -2,8 +2,15 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const MY_LOGIN = 'l1zavetkns'; 
 
-const MY_LOGIN = 'l1zavetkns';
+function getTodayFormatted() {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    return `${day}-${month}-${year}`;
+}
 
 
 app.use((req, res, next) => {
@@ -17,13 +24,34 @@ app.use((req, res, next) => {
 });
 
 
-function getTodayFormatted() {
-    const today = new Date();
-    const day = String(today.getDate()).padStart(2, '0');
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const year = today.getFullYear();
-    return `${day}-${month}-${year}`;
-}
+app.get('/api/rv/:string', (req, res) => {
+    const inputString = req.params.string;
+    const stringRegex = /^[a-z]+$/;
+    
+    if (!stringRegex.test(inputString)) {
+        return res.status(400).send('Invalid string');
+    }
+    
+    const reversed = inputString.split('').reverse().join('');
+    res.setHeader('Content-Type', 'text/plain');
+    res.send(reversed);
+});
+
+
+app.get('/:date', (req, res, next) => {
+    const dateParam = req.params.date;
+    const dateRegex = /^\d{6}$/;
+    
+    if (!dateRegex.test(dateParam)) {
+        return next(); 
+    }
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+        date: getTodayFormatted(),
+        login: MY_LOGIN
+    });
+});
 
 
 app.get('/', (req, res) => {
@@ -34,41 +62,6 @@ app.get('/', (req, res) => {
     });
 });
 
-
-app.get('/:date/', (req, res) => {
-    const dateParam = req.params.date;
-    const dateRegex = /^\d{6}$/; 
-    
-    if (!dateRegex.test(dateParam)) {
-        return res.status(400).json({ error: 'Invalid date format. Use DDMMYY' });
-    }
-    
-    res.setHeader('Content-Type', 'application/json');
-    res.json({
-        date: getTodayFormatted(),
-        login: MY_LOGIN
-    });
-});
-
-
-app.get('/api/rv/:string/', (req, res) => {
-    const inputString = req.params.string;
-    const stringRegex = /^[a-z]+$/;
-    
-    if (!stringRegex.test(inputString)) {
-        return res.status(400).json({ 
-            error: 'String must contain only lowercase latin letters (a-z)' 
-        });
-    }
-    
-    const reversed = inputString.split('').reverse().join('');
-    
-    res.setHeader('Content-Type', 'application/json');
-    res.json({ reversed });
-});
-
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
-
-module.exports = app;
